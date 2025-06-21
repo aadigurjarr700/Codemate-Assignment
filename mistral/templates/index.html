@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Function Orchestrator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .query-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s ease;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .query-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            margin-top: 30px;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-card.error {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .result-card.success {
+            border-left-color: #28a745;
+            background: #f0fff4;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .result-status {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .result-time {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .json-display {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+
+        .collapsible {
+            cursor: pointer;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            margin: 10px 0;
+            user-select: none;
+        }
+
+        .collapsible:hover {
+            background: #dee2e6;
+        }
+
+        .collapsible-content {
+            display: none;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+
+        .error-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .error-item {
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+            color: #c53030;
+        }
+
+        .examples {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .examples h3 {
+            margin-bottom: 15px;
+            color: #495057;
+        }
+
+        .example-item {
+            background: white;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border: 1px solid #e9ecef;
+        }
+
+        .example-item:hover {
+            background: #f1f3f4;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Function Orchestrator</h1>
+            <p>AI-powered function planning and execution system</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="examples">
+                <h3>📝 Example Queries</h3>
+                <div class="example-item" onclick="fillExample('Get all invoices for March 2024, calculate the total amount, and send me a summary via email')">
+                    Get all invoices for March 2024, calculate the total amount, and send me a summary via email
+                </div>
+                <div class="example-item" onclick="fillExample('Find low stock products and create purchase orders')">
+                    Find low stock products and create purchase orders
+                </div>
+                <div class="example-item" onclick="fillExample('Generate monthly sales report and upload it to cloud storage')">
+                    Generate monthly sales report and upload it to cloud storage
+                </div>
+            </div>
+
+            <div class="input-section">
+                <textarea 
+                    id="queryInput" 
+                    class="query-input" 
+                    placeholder="Enter your query here... (e.g., 'Get all invoices for March 2024, calculate the total amount, and send me a summary via email')"
+                ></textarea>
+                
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="processQuery()">
+                        🚀 Execute Query
+                    </button>
+                    <button class="btn btn-secondary" onclick="getPlan()">
+                        📋 Get Plan Only
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearResults()">
+                        🗑️ Clear Results
+                    </button>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Processing your request...</p>
+            </div>
+
+            <div class="results-section" id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        function fillExample(example) {
+            document.getElementById('queryInput').value = example;
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.querySelectorAll('.btn').forEach(btn => btn.disabled = false);
+        }
+
+        async function processQuery() {
+            const query = document.getElementById('queryInput').value.trim();
+            if (!query) {
+                alert('Please enter a query');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+
+                const data = await response.json();
+                displayResult(data, 'Execution Result');
+            } catch (error) {
+                displayError('Network error: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function getPlan() {
+            const query = document.getElementById('queryInput').value.trim();
+            if (!query) {
+                alert('Please enter a query');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch('/api/plan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+
+                const data = await response.json();
+                displayResult(data, 'Execution Plan');
+            } catch (error) {
+                displayError('Network error: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayResult(data, title) {
+            const resultsDiv = document.getElementById('results');
+            const resultCard = document.createElement('div');
+            resultCard.className = `result-card ${data.success ? 'success' : 'error'}`;
+
+            let html = `
+                <div class="result-header">
+                    <div class="result-status">
+                        ${data.success ? '✅' : '❌'} ${title}
+                    </div>
+                    <div class="result-time">${new Date(data.timestamp).toLocaleString()}</div>
+                </div>
+            `;
+
+            if (data.query) {
+                html += `<p><strong>Query:</strong> ${data.query}</p>`;
+            }
+
+            if (data.execution_time !== undefined) {
+                html += `<p><strong>Execution Time:</strong> ${data.execution_time.toFixed(2)}s</p>`;
+            }
+
+            if (data.errors && data.errors.length > 0) {
+                html += `
+                    <div class="collapsible" onclick="toggleCollapsible(this)">
+                        ❌ Errors (${data.errors.length}) - Click to expand
+                    </div>
+                    <div class="collapsible-content">
+                        <ul class="error-list">
+                            ${data.errors.map(error => `<li class="error-item">${error}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (data.results && Object.keys(data.results).length > 0) {
+                html += `
+                    <div class="collapsible" onclick="toggleCollapsible(this)">
+                        📊 Results (${Object.keys(data.results).length}) - Click to expand
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="json-display">${JSON.stringify(data.results, null, 2)}</div>
+                    </div>
+                `;
+            }
+
+            if (data.plan) {
+                html += `
+                    <div class="collapsible" onclick="toggleCollapsible(this)">
+                        📋 Execution Plan - Click to expand
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="json-display">${JSON.stringify(data.plan, null, 2)}</div>
+                    </div>
+                `;
+            }
+
+            if (data.explanation) {
+                html += `
+                    <div class="collapsible" onclick="toggleCollapsible(this)">
+                        💡 Plan Explanation - Click to expand
+                    </div>
+                    <div class="collapsible-content">
+                        <pre style="white-space: pre-wrap; font-family: inherit;">${data.explanation}</pre>
+                    </div>
+                `;
+            }
+
+            resultCard.innerHTML = html;
+            resultsDiv.insertBefore(resultCard, resultsDiv.firstChild);
+        }
+
+        function displayError(message) {
+            const resultsDiv = document.getElementById('results');
+            const errorCard = document.createElement('div');
+            errorCard.className = 'result-card error';
+            errorCard.innerHTML = `
+                <div class="result-header">
+                    <div class="result-status">❌ Error</div>
+                    <div class="result-time">${new Date().toLocaleString()}</div>
+                </div>
+                <p>${message}</p>
+            `;
+            resultsDiv.insertBefore(errorCard, resultsDiv.firstChild);
+        }
+
+        function toggleCollapsible(element) {
+            const content = element.nextElementSibling;
+            if (content.style.display === 'none' || content.style.display === '') {
+                content.style.display = 'block';
+                element.innerHTML = element.innerHTML.replace('Click to expand', 'Click to collapse');
+            } else {
+                content.style.display = 'none';
+                element.innerHTML = element.innerHTML.replace('Click to collapse', 'Click to expand');
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('queryInput').value = '';
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Function Orchestrator Frontend Loaded');
+        });
+    </script>
+</body>
+</html>
